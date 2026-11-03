@@ -1,0 +1,83 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales History</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            padding: 30px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background: #0d6efd;
+            color: white;
+        }
+        .total {
+            font-size: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sales History</h1>
+
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+
+        <p class="total">Total Revenue: ₹{{ total_revenue }}</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Sale ID</th>
+                    <th>Product</th>
+                    <th>Quantity Sold</th>
+                    <th>Unit Price</th>
+                    <th>Total</th>
+                    <th>Date & Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sale in sales %}
+                <tr>
+                    <td>{{ sale.id }}</td>
+                    <td>{{ sale.product.name }}</td>
+                    <td>{{ sale.quantity_sold }}</td>
+                    <td>₹{{ sale.unit_price }}</td>
+                    <td>₹{{ sale.total_amount }}</td>
+                    <td>{{ sale.sold_at|date:"d M Y, h:i A" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">No sales recorded yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <p><a href="{% url 'add_sale' %}">Record Another Sale</a></p>
+        <p><a href="/">Back to Inventory</a></p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,91 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Record Purchase</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 30px; }
+        .container { max-width: 650px; margin: auto; padding: 25px; background: white; border-radius: 8px; }
+        label { display: block; margin-top: 16px; font-weight: bold; }
+        input, select, textarea { width: 100%; box-sizing: border-box; padding: 10px; margin-top: 6px; border: 1px solid #ccc; border-radius: 4px; }
+        button, .link { display: inline-block; margin-top: 20px; padding: 10px 15px; background: #2563eb; color: white; border: 0; border-radius: 5px; text-decoration: none; cursor: pointer; }
+        .link { background: #475569; }
+        .messages { color: #166534; }
+        .help { color: #555; font-size: 13px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Record a Purchase</h1>
+        <p>Record goods purchased from a supplier. Stock will increase after saving.</p>
+
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% if not products %}
+            <p>You need to add a product first.</p>
+            <a class="link" href="{% url 'add_product' %}">Add Product</a>
+        {% elif not suppliers %}
+            <p>You need to add a supplier first.</p>
+            <a class="link" href="{% url 'add_supplier' %}">Add Supplier</a>
+        {% else %}
+            <form method="post">
+                {% csrf_token %}
+
+                <label for="supplier">Supplier *</label>
+                <select id="supplier" name="supplier" required>
+                    <option value="">-- Select supplier --</option>
+                    {% for supplier in suppliers %}
+                        <option value="{{ supplier.id }}"
+                            {% if form_data.supplier == supplier.id|stringformat:"s" %}selected{% endif %}>
+                            {{ supplier.company_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <label for="product">Product *</label>
+                <select id="product" name="product" required>
+                    <option value="">-- Select product --</option>
+                    {% for product in products %}
+                        <option value="{{ product.id }}"
+                            {% if form_data.product == product.id|stringformat:"s" %}selected{% endif %}>
+                            {{ product.name }} (Current stock: {{ product.quantity }})
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <label for="quantity_purchased">Quantity Purchased *</label>
+                <input id="quantity_purchased" type="number"
+                       name="quantity_purchased" min="1" step="1" required
+                       value="{{ form_data.quantity_purchased|default:'' }}">
+
+                <label for="unit_cost">Purchase Price per Unit (₹) *</label>
+                <input id="unit_cost" type="number" name="unit_cost"
+                       min="0" step="0.01" required
+                       value="{{ form_data.unit_cost|default:'' }}">
+
+                <p class="help">Total purchase cost = quantity × purchase price per unit.</p>
+
+                <label for="notes">Notes (optional)</label>
+                <textarea id="notes" name="notes" maxlength="255" rows="3">{{ form_data.notes|default:'' }}</textarea>
+
+                <button type="submit">Save Purchase and Update Stock</button>
+            </form>
+        {% endif %}
+
+        <p>
+            <a class="link" href="{% url 'purchase_history' %}">Purchase History</a>
+            <a class="link" href="{% url 'supplier_list' %}">Suppliers</a>
+            <a class="link" href="{% url 'product_list' %}">Back to Products</a>
+        </p>
+    </div>
+</body>
+</html>
+

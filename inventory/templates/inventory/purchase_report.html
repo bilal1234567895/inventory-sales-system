@@ -1,0 +1,363 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Reports - Inventory Management</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 25px;
+            color: #222;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        .navigation {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 10px 14px;
+            border: none;
+            border-radius: 5px;
+            background: #2563eb;
+            color: white;
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .green {
+            background: #15803d;
+        }
+
+        .dark {
+            background: #475569;
+        }
+
+        .orange {
+            background: #c2410c;
+        }
+
+        .filter-box,
+        .panel,
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 6px #00000012;
+        }
+
+        .filter-form {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: end;
+            gap: 12px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        input[type="date"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .card h3 {
+            margin: 0 0 12px;
+            color: #555;
+            font-size: 15px;
+        }
+
+        .number {
+            font-size: 25px;
+            font-weight: bold;
+            overflow-wrap: anywhere;
+        }
+
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        th {
+            background: #e8edf5;
+        }
+
+        tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .messages {
+            padding: 12px 30px;
+            background: #fff3cd;
+            color: #856404;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        .export-section {
+            margin-top: 15px;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 12px;
+            }
+
+            .number {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <h1>Purchase Reports</h1>
+
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <div class="navigation">
+        <a class="button dark" href="{% url 'product_list' %}">Products</a>
+        <a class="button green" href="{% url 'add_purchase' %}">Record Purchase</a>
+        <a class="button" href="{% url 'purchase_history' %}">Purchase History</a>
+        <a class="button dark" href="{% url 'dashboard' %}">Dashboard</a>
+    </div>
+
+    <!-- Date filter -->
+    <div class="filter-box">
+        <h2>Filter Purchase Report</h2>
+
+        <form method="get"
+              action="{% url 'purchase_report' %}"
+              class="filter-form">
+
+            <div>
+                <label for="start_date">Start Date</label>
+                <input
+                    type="date"
+                    id="start_date"
+                    name="start_date"
+                    value="{{ start_date }}">
+            </div>
+
+            <div>
+                <label for="end_date">End Date</label>
+                <input
+                    type="date"
+                    id="end_date"
+                    name="end_date"
+                    value="{{ end_date }}">
+            </div>
+
+            <button class="button" type="submit">
+                Generate Report
+            </button>
+
+            <a class="button dark" href="{% url 'purchase_report' %}">
+                Clear Filters
+            </a>
+        </form>
+
+        <!-- CSV export uses the same date range -->
+        <div class="export-section">
+            <a
+                class="button green"
+                href="{% url 'export_purchase_csv' %}?start_date={{ start_date|urlencode }}&amp;end_date={{ end_date|urlencode }}">
+                Export Purchase Report to CSV
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary cards -->
+    <div class="summary-cards">
+
+        <div class="card">
+            <h3>Total Purchase Cost</h3>
+            <div class="number">
+                ₹{{ total_cost|floatformat:2 }}
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Purchase Transactions</h3>
+            <div class="number">
+                {{ total_transactions }}
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Total Units Purchased</h3>
+            <div class="number">
+                {{ total_units }}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Purchases by supplier -->
+    <div class="panel">
+        <h2>Purchases by Supplier</h2>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Supplier</th>
+                        <th>Transactions</th>
+                        <th>Units Purchased</th>
+                        <th>Total Cost (₹)</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for item in supplier_totals %}
+                        <tr>
+                            <td>{{ item.supplier__company_name }}</td>
+                            <td>{{ item.purchase_count }}</td>
+                            <td>{{ item.units }}</td>
+                            <td>{{ item.cost|floatformat:2 }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4">
+                                No purchase data found for this period.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Purchases by product -->
+    <div class="panel">
+        <h2>Purchases by Product</h2>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Transactions</th>
+                        <th>Units Purchased</th>
+                        <th>Total Cost (₹)</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for item in product_totals %}
+                        <tr>
+                            <td>{{ item.product__name }}</td>
+                            <td>{{ item.purchase_count }}</td>
+                            <td>{{ item.units }}</td>
+                            <td>{{ item.cost|floatformat:2 }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4">
+                                No purchase data found for this period.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Detailed purchase records -->
+    <div class="panel">
+        <h2>Purchase Details</h2>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Purchase ID</th>
+                        <th>Date</th>
+                        <th>Product</th>
+                        <th>Supplier</th>
+                        <th>Quantity</th>
+                        <th>Unit Cost (₹)</th>
+                        <th>Total Cost (₹)</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for purchase in purchases %}
+                        <tr>
+                            <td>{{ purchase.id }}</td>
+                            <td>{{ purchase.purchased_at|date:"d-m-Y H:i" }}</td>
+                            <td>{{ purchase.product.name }}</td>
+                            <td>{{ purchase.supplier.company_name }}</td>
+                            <td>{{ purchase.quantity_purchased }}</td>
+                            <td>{{ purchase.unit_cost|floatformat:2 }}</td>
+                            <td>{{ purchase.total_cost|floatformat:2 }}</td>
+                            <td>{{ purchase.notes|default:"—" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="8">
+                                No purchases found for this period.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

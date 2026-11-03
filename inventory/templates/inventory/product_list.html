@@ -1,0 +1,150 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Management - Products</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 25px; background: #f4f6f9; color: #222; }
+        h1 { margin-bottom: 20px; }
+        .navigation { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 25px; }
+        .button { display: inline-block; padding: 10px 14px; border: none; border-radius: 5px; background: #2563eb; color: white; text-decoration: none; cursor: pointer; font-size: 14px; }
+        .green { background: #15803d; }
+        .purple { background: #7c3aed; }
+        .dark { background: #475569; }
+        .red { background: #dc2626; }
+        .orange { background: #c2410c; }
+        .filter-box { background: white; padding: 18px; border-radius: 8px; margin-bottom: 20px; }
+        .filter-box input, .filter-box select { padding: 10px; margin: 5px 5px 5px 0; border: 1px solid #ccc; border-radius: 4px; }
+        table { width: 100%; border-collapse: collapse; background: white; margin-top: 15px; }
+        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+        th { background: #e8edf5; }
+        tr:hover { background: #f8fafc; }
+        .status { display: inline-block; padding: 5px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .in-stock { color: #166534; background: #dcfce7; }
+        .low-stock { color: #92400e; background: #fef3c7; }
+        .out-stock { color: #991b1b; background: #fee2e2; }
+        .messages { padding: 12px; background: #dcfce7; color: #166534; border-radius: 5px; }
+        .action-form { display: inline; }
+        .empty { background: white; padding: 20px; }
+        @media (max-width: 800px) {
+            body { padding: 12px; }
+            .table-container { overflow-x: auto; }
+            table { min-width: 850px; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Inventory Management System</h1>
+
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <div class="navigation">
+        <a class="button green" href="{% url 'add_product' %}">+ Add New Product</a>
+        <a class="button orange" href="{% url 'restock_product' %}">Restock Product</a>
+        <a class="button orange" href="{% url 'restock_history' %}">Restock History</a>
+        <a class="button purple" href="{% url 'supplier_list' %}">Suppliers</a>
+
+        <a class="button green" href="{% url 'add_purchase' %}">Record Purchase</a>
+        <a class="button green" href="{% url 'purchase_history' %}">Purchase History</a>
+        <a class="button orange" href="{% url 'purchase_report' %}">Purchase Reports</a>
+
+        <a class="button" href="{% url 'add_sale' %}">Record Sale</a>
+        <a class="button" href="{% url 'sales_history' %}">Sales History</a>
+        <a class="button" href="{% url 'sales_report' %}">Sales Reports</a>
+        <a class="button dark" href="{% url 'dashboard' %}">Dashboard</a>
+
+        <form method="post" action="{% url 'logout' %}" class="action-form">
+            {% csrf_token %}
+            <button class="button red" type="submit">Logout</button>
+        </form>
+    </div>
+
+    <div class="filter-box">
+        <h3>Search and Filter Products</h3>
+        <form method="get" action="{% url 'product_list' %}">
+            <input type="text" name="search"
+                   placeholder="Search product name"
+                   value="{{ search_query }}">
+
+            <select name="category">
+                <option value="">All Categories</option>
+                {% for category in categories %}
+                    <option value="{{ category }}"
+                        {% if selected_category == category %}selected{% endif %}>
+                        {{ category }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <button class="button" type="submit">Search / Filter</button>
+            <a class="button dark" href="{% url 'product_list' %}">Clear Filters</a>
+        </form>
+    </div>
+
+    <h2>Product List</h2>
+
+    {% if products %}
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Product Name</th>
+                        <th>Category</th>
+                        <th>Price (₹)</th>
+                        <th>Quantity</th>
+                        <th>Stock Status</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                        <tr>
+                            <td>{{ product.id }}</td>
+                            <td>{{ product.name }}</td>
+                            <td>{{ product.category }}</td>
+                            <td>₹{{ product.price }}</td>
+                            <td>{{ product.quantity }}</td>
+                            <td>
+                                {% if product.quantity == 0 %}
+                                    <span class="status out-stock">Out of Stock</span>
+                                {% elif product.quantity <= 5 %}
+                                    <span class="status low-stock">Low Stock</span>
+                                {% else %}
+                                    <span class="status in-stock">In Stock</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ product.description|default:"—" }}</td>
+                            <td>
+                                <a class="button"
+                                   href="{% url 'edit_product' product.id %}">Edit</a>
+
+                                <form method="post"
+                                      action="{% url 'delete_product' product.id %}"
+                                      class="action-form"
+                                      onsubmit="return confirm('Are you sure you want to delete this product?');">
+                                    {% csrf_token %}
+                                    <button class="button red" type="submit">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="empty">No products found. Add a new product or clear your filters.</p>
+    {% endif %}
+
+</body>
+</html>

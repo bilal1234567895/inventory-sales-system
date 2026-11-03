@@ -1,0 +1,321 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Reports</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            color: #333;
+            margin: 0;
+            padding: 25px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            background: #475569;
+            color: white;
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .button:hover {
+            opacity: 0.85;
+        }
+
+        .filter-form {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: end;
+            gap: 12px;
+            padding: 18px;
+            margin-bottom: 20px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+
+        .filter-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filter-field label {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .filter-field input {
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 5px;
+        }
+
+        .generate-button {
+            background: #2563eb;
+        }
+
+        .clear-button {
+            background: #64748b;
+        }
+
+        .export-button {
+            background: #15803d;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .summary-card {
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        .summary-card h3 {
+            margin: 0 0 12px;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .summary-card p {
+            margin: 0;
+            font-size: 25px;
+            font-weight: bold;
+            overflow-wrap: anywhere;
+        }
+
+        .error {
+            padding: 12px;
+            margin-bottom: 12px;
+            background: #fee2e2;
+            color: #991b1b;
+            border-radius: 5px;
+        }
+
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        th {
+            background: #1e293b;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 25px;
+            color: #64748b;
+        }
+
+        @media (max-width: 700px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            .summary {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-field,
+            .filter-field input {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <h1>Sales Reports</h1>
+
+    <div class="buttons">
+        <a href="{% url 'product_list' %}" class="button">
+            Product Inventory
+        </a>
+
+        <a href="{% url 'dashboard' %}" class="button">
+            Dashboard
+        </a>
+
+        <a href="{% url 'sales_history' %}" class="button">
+            Sales History
+        </a>
+    </div>
+
+    {% for error in errors %}
+        <div class="error">{{ error }}</div>
+    {% endfor %}
+
+    <form method="get" action="{% url 'sales_report' %}"
+          class="filter-form">
+
+        <div class="filter-field">
+            <label for="start_date">Start Date</label>
+            <input
+                type="date"
+                id="start_date"
+                name="start_date"
+                value="{{ start_date }}"
+                max="{{ today }}"
+            >
+        </div>
+
+        <div class="filter-field">
+            <label for="end_date">End Date</label>
+            <input
+                type="date"
+                id="end_date"
+                name="end_date"
+                value="{{ end_date }}"
+                max="{{ today }}"
+            >
+        </div>
+
+        <button type="submit"
+                class="button generate-button">
+            Generate Report
+        </button>
+
+        <a href="{% url 'sales_report' %}"
+           class="button clear-button">
+            Clear Filters
+        </a>
+    </form>
+
+    <div class="summary">
+        <div class="summary-card">
+            <h3>Total Revenue</h3>
+            <p>₹{{ total_revenue|floatformat:2 }}</p>
+        </div>
+
+        <div class="summary-card">
+            <h3>Sales Transactions</h3>
+            <p>{{ total_transactions }}</p>
+        </div>
+
+        <div class="summary-card">
+            <h3>Total Items Sold</h3>
+            <p>{{ total_items_sold }}</p>
+        </div>
+    </div>
+
+    <div class="buttons">
+        <form method="get"
+              action="{% url 'export_sales_csv' %}">
+
+            <input type="hidden"
+                   name="start_date"
+                   value="{{ start_date }}">
+
+            <input type="hidden"
+                   name="end_date"
+                   value="{{ end_date }}">
+
+            <button type="submit"
+                    class="button export-button">
+                Export CSV
+            </button>
+        </form>
+    </div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Sale ID</th>
+                    <th>Product</th>
+                    <th>Quantity Sold</th>
+                    <th>Unit Price</th>
+                    <th>Total Amount</th>
+                    <th>Date &amp; Time</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for sale in sales %}
+                    <tr>
+                        <td>{{ sale.id }}</td>
+                        <td>{{ sale.product.name }}</td>
+                        <td>{{ sale.quantity_sold }}</td>
+                        <td>₹{{ sale.unit_price|floatformat:2 }}</td>
+                        <td>₹{{ sale.total_amount|floatformat:2 }}</td>
+                        <td>
+                            {{ sale.sold_at|date:"d-m-Y H:i" }}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="empty-message">
+                            No sales found for the selected date range.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+</body>
+</html>

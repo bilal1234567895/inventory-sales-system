@@ -1,0 +1,62 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if supplier %}Edit Supplier{% else %}Add Supplier{% endif %}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; background: #f4f6f9; }
+        .container { max-width: 600px; margin: auto; padding: 25px; background: white; border-radius: 8px; }
+        label { display: block; margin-top: 15px; font-weight: bold; }
+        input, textarea { width: 100%; box-sizing: border-box; padding: 10px; margin-top: 6px; border: 1px solid #ccc; border-radius: 4px; }
+        button, .back { display: inline-block; padding: 10px 15px; margin-top: 20px; background: #2563eb; color: white; border: 0; border-radius: 5px; text-decoration: none; cursor: pointer; }
+        .back { background: #475569; }
+        .messages { color: #b91c1c; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{% if supplier %}Edit Supplier{% else %}Add Supplier{% endif %}</h1>
+
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            <label for="company_name">Company Name *</label>
+            <input id="company_name" type="text" name="company_name"
+                   maxlength="150" required
+                   value="{{ supplier.company_name|default:'' }}">
+
+            <label for="contact_name">Contact Person *</label>
+            <input id="contact_name" type="text" name="contact_name"
+                   maxlength="100" required
+                   value="{{ supplier.contact_name|default:'' }}">
+
+            <label for="phone">Phone Number *</label>
+            <input id="phone" type="tel" name="phone"
+                   maxlength="20" required
+                   value="{{ supplier.phone|default:'' }}">
+
+            <label for="email">Email</label>
+            <input id="email" type="email" name="email"
+                   value="{{ supplier.email|default:'' }}">
+
+            <label for="address">Address</label>
+            <textarea id="address" name="address" rows="4">{{ supplier.address|default:'' }}</textarea>
+
+            <button type="submit">
+                {% if supplier %}Update Supplier{% else %}Save Supplier{% endif %}
+            </button>
+            <a class="back" href="{% url 'supplier_list' %}">Cancel</a>
+        </form>
+    </div>
+</body>
+</html>

@@ -1,0 +1,87 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Record Sale</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            padding: 30px;
+        }
+        .container {
+            max-width: 500px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+        }
+        label {
+            display: block;
+            margin-top: 15px;
+        }
+        select, input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px;
+            margin-top: 5px;
+        }
+        button {
+            margin-top: 20px;
+            padding: 12px 18px;
+            border: none;
+            border-radius: 5px;
+            background: #198754;
+            color: white;
+            cursor: pointer;
+        }
+        .message {
+            padding: 10px;
+            background: #f8d7da;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Record a Sale</h1>
+
+        {% for message in messages %}
+            <p class="message">{{ message }}</p>
+        {% endfor %}
+
+        {% if products %}
+        <form method="post">
+            {% csrf_token %}
+
+            <label>Select Product:</label>
+            <select name="product" required>
+                {% for product in products %}
+                <option value="{{ product.id }}">
+                    {{ product.name }} — ₹{{ product.price }}
+                    (Stock: {{ product.quantity }})
+                </option>
+                {% endfor %}
+            </select>
+
+            <label>Quantity Sold:</label>
+            <input
+                type="number"
+                name="quantity_sold"
+                min="1"
+                required
+            >
+
+            <button type="submit">Complete Sale</button>
+        </form>
+        {% else %}
+            <p>No products are currently in stock.</p>
+        {% endif %}
+
+        <p><a href="/">Back to Inventory</a></p>
+        <p><a href="{% url 'sales_history' %}">View Sales History</a></p>
+    </div>
+</body>
+</html>

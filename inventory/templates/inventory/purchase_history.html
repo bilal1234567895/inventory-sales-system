@@ -1,0 +1,92 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase History</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; background: #f4f6f9; color: #222; }
+        .summary { display: flex; flex-wrap: wrap; gap: 15px; margin: 20px 0; }
+        .card { flex: 1; min-width: 170px; padding: 18px; background: white; border-radius: 8px; }
+        .card h3 { margin-top: 0; font-size: 15px; color: #555; }
+        .card p { font-size: 22px; font-weight: bold; margin-bottom: 0; }
+        .button { display: inline-block; padding: 10px 14px; margin: 5px 3px; background: #2563eb; color: white; text-decoration: none; border-radius: 5px; }
+        .dark { background: #475569; }
+        table { width: 100%; border-collapse: collapse; background: white; margin-top: 20px; }
+        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+        th { background: #e8edf5; }
+        .table-container { overflow-x: auto; }
+        .messages { color: #166534; }
+        @media (max-width: 800px) {
+            body { margin: 12px; }
+            table { min-width: 850px; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Purchase History</h1>
+
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <a class="button" href="{% url 'add_purchase' %}">+ Record Purchase</a>
+    <a class="button dark" href="{% url 'product_list' %}">Back to Products</a>
+    <a class="button dark" href="{% url 'supplier_list' %}">Suppliers</a>
+
+    <div class="summary">
+        <div class="card">
+            <h3>Total Purchase Cost</h3>
+            <p>₹{{ total_cost|floatformat:2 }}</p>
+        </div>
+        <div class="card">
+            <h3>Purchase Transactions</h3>
+            <p>{{ total_transactions }}</p>
+        </div>
+        <div class="card">
+            <h3>Total Units Purchased</h3>
+            <p>{{ total_units }}</p>
+        </div>
+    </div>
+
+    {% if purchases %}
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Purchase ID</th>
+                        <th>Date &amp; Time</th>
+                        <th>Supplier</th>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Unit Cost</th>
+                        <th>Total Cost</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for purchase in purchases %}
+                        <tr>
+                            <td>{{ purchase.id }}</td>
+                            <td>{{ purchase.purchased_at|date:"d M Y, H:i" }}</td>
+                            <td>{{ purchase.supplier.company_name }}</td>
+                            <td>{{ purchase.product.name }}</td>
+                            <td>{{ purchase.quantity_purchased }}</td>
+                            <td>₹{{ purchase.unit_cost|floatformat:2 }}</td>
+                            <td>₹{{ purchase.total_cost|floatformat:2 }}</td>
+                            <td>{{ purchase.notes|default:"—" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>No purchases recorded yet. Select “Record Purchase” to add your first purchase.</p>
+    {% endif %}
+</body>
+</html>

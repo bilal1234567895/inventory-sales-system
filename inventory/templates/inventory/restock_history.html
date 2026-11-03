@@ -1,0 +1,58 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restock History</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; background: #f4f6f9; }
+        table { width: 100%; border-collapse: collapse; background: white; margin-top: 20px; }
+        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+        th { background: #e8edf5; }
+        .button { display: inline-block; padding: 10px 14px; margin: 5px 3px; background: #2563eb; color: white; text-decoration: none; border-radius: 5px; }
+        .summary { background: white; padding: 15px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Restock History</h1>
+
+    <a class="button" href="{% url 'restock_product' %}">Restock Product</a>
+    <a class="button" href="{% url 'supplier_list' %}">Manage Suppliers</a>
+    <a class="button" href="{% url 'product_list' %}">Back to Products</a>
+
+    <div class="summary">
+        <p><strong>Total restock transactions:</strong> {{ total_transactions }}</p>
+        <p><strong>Total units received:</strong> {{ total_units }}</p>
+    </div>
+
+    {% if restocks %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Restock ID</th>
+                    <th>Product</th>
+                    <th>Supplier</th>
+                    <th>Quantity Received</th>
+                    <th>Notes</th>
+                    <th>Date &amp; Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for restock in restocks %}
+                    <tr>
+                        <td>{{ restock.id }}</td>
+                        <td>{{ restock.product.name }}</td>
+                        <td>{{ restock.supplier.company_name|default:"—" }}</td>
+                        <td>{{ restock.quantity_added }}</td>
+                        <td>{{ restock.notes|default:"—" }}</td>
+                        <td>{{ restock.restocked_at|date:"d M Y, H:i" }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No restock records are available yet.</p>
+    {% endif %}
+</body>
+</html>
